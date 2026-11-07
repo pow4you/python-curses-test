@@ -11,6 +11,52 @@ import asyncio
 import curses
 import time
 
+
+# TODO 5: separate state from drawing (the design of main.py)
+#
+#   Goal: tasks only CHANGE state, one Renderer class DRAWS it.
+#   After this, no task other than the renderer ever calls addstr/refresh.
+#
+#   Stage 1 - shared state.
+#     Put everything the screen shows into one object: a dict, or better a
+#     small @dataclass State with frames, total, paused, side_count.
+#     app() and side_step() now only write to it. Nothing draws yet.
+#     Checkpoint: print the state to a log file each second to see it change.
+#
+#   Stage 2 - the Renderer class.
+#     class Renderer:
+#         def __init__(self, stdscr, state): ...
+#         def put(self, y, x, text, attr=0):   # the clipped addstr helper:
+#             ...                              # skip if off-screen, trim text,
+#                                              # catch curses.error ONCE, here
+#         def draw(self): ...                  # erase(), put() each line from
+#                                              # state, refresh(). Nothing else.
+#     Checkpoint: replace every stdscr.addstr in your tasks with state writes,
+#     and call renderer.draw() from ONE place. Output looks identical.
+#
+#   Stage 3 - one render task.
+#     async def render_loop(renderer, running): draw, then await sleep(0.05).
+#     amain() gathers three things now: input/logic, side_step, render_loop.
+#     Question to answer: why can erase() safely live in draw() now, when it
+#     would have fought the side task before?
+#
+#   Stage 4 - input in its own place.
+#     Move getch()/key handling out of app() into on_key(key, state).
+#     It only changes state (pause, quit), same as the tasks do.
+#     Checkpoint: pausing still works, and `app` no longer touches stdscr.
+#
+#   Stage 5 - stretch.
+#     Add Renderer.panel(y, x, h, w, title) drawn with box characters,
+#     and put the counter in one panel and the side task in another.
+#     Then add a task that appends a line to a list in state every second,
+#     and show the last few lines in a "Log" panel.
+#
+#   Done when: you could add a third background task without touching
+#   Renderer's drawing code except to show the new field.
+
+
+
+
 # TODO 4 (the big one): rewrite this as `async def main()` with
 #         `await asyncio.sleep(0.05)`, run a second task that prints
 #         something else on row 4, and watch both update. That is
