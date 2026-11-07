@@ -19,9 +19,6 @@ def main(stdscr):
     # TODO 4: add colour: curses.start_color(), curses.use_default_colors(),
     #         curses.init_pair(1, curses.COLOR_CYAN, -1),
     #         then attr = curses.color_pair(1).
-    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_WHITE)
-    stdscr.addstr(0, 0, "RED ALERT!", curses.color_pair(1))
-
     curses.init_pair(2, curses.COLOR_CYAN, 0)
 
     stored_key = "no key pressed"
@@ -47,10 +44,16 @@ def main(stdscr):
 
         # TODO 2: make "hello, curses" bold (3rd argument: curses.A_BOLD).
         hwtxt = "hello, curses"
-        stdscr.addstr(ymiddle-2, xmiddle-len(hwtxt) // 2, hwtxt, curses.A_BOLD | curses.color_pair(2))  # addstr(row, col, text): row first!
+        try:
+            stdscr.addstr(ymiddle-2, xmiddle-len(hwtxt) // 2, hwtxt, curses.A_BOLD | curses.color_pair(2))  # addstr(row, col, text): row first!
+        except curses.error:
+            pass
 
         qutxt = "press q to quit"
-        stdscr.addstr(ymiddle, xmiddle-len(qutxt) // 2, qutxt)
+        try:
+            stdscr.addstr(ymiddle, xmiddle-len(qutxt) // 2, qutxt)
+        except curses.error:
+            pass
 
 
 
@@ -59,8 +62,10 @@ def main(stdscr):
         #         (hint: stdscr.keypad(True) makes arrows arrive as KEY_UP etc.
         #          instead of three raw bytes.)
         lktxt = "last key: {}".format(key)
-        stdscr.addstr(ymiddle + 2, xmiddle - len(lktxt) // 2, lktxt)
-
+        try:
+            stdscr.addstr(ymiddle + 2, xmiddle - len(lktxt) // 2, lktxt)
+        except curses.error:
+            pass
 
 
         stdscr.refresh()
