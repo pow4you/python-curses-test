@@ -24,6 +24,8 @@ def main(stdscr):
         #         Press arrows, Enter, Backspace, Esc. What are their codes?
         #         (hint: stdscr.keypad(True) makes arrows arrive as KEY_UP etc.
         #          instead of three raw bytes.)
+        stdscr.addstr(6, 4, "last key: {}".format(key))
+
         # TODO 2: make "hello, curses" bold (3rd argument: curses.A_BOLD).
         # TODO 3: center the text. stdscr.getmaxyx() returns (height, width).
         # TODO 4: add colour: curses.start_color(), curses.use_default_colors(),
