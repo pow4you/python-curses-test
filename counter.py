@@ -17,7 +17,10 @@ def main(stdscr):
     stdscr.keypad(True)  # allow for reading arrow keys correcly
 
 
-    start_time = time.time()
+    pause_toggle = False
+    start_time = time.perf_counter()
+    elapsed = 0
+    total = 0
     frames = 0
     while True:
         stdscr.clear()
@@ -28,20 +31,39 @@ def main(stdscr):
         if key == ord("q"):
             break
 
+        # TODO 3: make "p" pause and resume the counter (state, not drawing!).
+        if key == ord("p"):
+            pause_toggle = not pause_toggle
+            if start_time != 0:
+                elapsed = time.perf_counter() - start_time
+                start_time = 0
+            else:
+                start_time = time.perf_counter()
+
         # 2. update state
-        frames += 1
+        if not pause_toggle:
+            total = elapsed
+            if start_time != 0:
+                total += time.perf_counter() - start_time
+            frames += 1
+
 
         # 3. draw the whole screen from state
-
-        stdscr.addstr(2, 4, f"frames drawn: {frames}")
+        try:
+            stdscr.addstr(2, 4, f"frames drawn: {frames}")
+        except curses.error:
+            pass
 
         # TODO 1: show seconds elapsed instead (use time.time() at the start),
         #         so the number doesn't depend on how fast your loop runs.
-        seconds = time.time() - start_time
-        stdscr.addstr(3, 4, f"seconds elapsed: {seconds}")
+        try:
+            stdscr.addstr(3, 4, f"seconds elapsed: {total}")
+        except curses.error:
+            pass
+
         stdscr.refresh()
 
-        time.sleep(0.001)                    # ~20 frames per second
+        curses.napms(50)                    # ~20 frames per second
 
 
 
@@ -51,7 +73,6 @@ def main(stdscr):
         #         Does it flicker? Why does erase() + refresh() not?
         # Answer: Yes it flickers and no i have no idea
 
-        # TODO 3: make "p" pause and resume the counter (state, not drawing!).
         # TODO 4 (the big one): rewrite this as `async def main()` with
         #         `await asyncio.sleep(0.05)`, run a second task that prints
         #         something else on row 4, and watch both update. That is
