@@ -12,7 +12,9 @@ import curses
 
 def main(stdscr):
     curses.curs_set(0)                      # hide the blinking cursor
-    stdscr.addstr(2, 4, "hello, curses")    # addstr(row, col, text): row first!
+
+    # TODO 2: make "hello, curses" bold (3rd argument: curses.A_BOLD).
+    stdscr.addstr(2, 4, "hello, curses", curses.A_BOLD)    # addstr(row, col, text): row first!
     stdscr.addstr(4, 4, "press q to quit")
 
     while True:
@@ -26,7 +28,9 @@ def main(stdscr):
         #          instead of three raw bytes.)
         stdscr.addstr(6, 4, "last key: {}".format(key))
 
-        # TODO 2: make "hello, curses" bold (3rd argument: curses.A_BOLD).
+
+
+
         # TODO 3: center the text. stdscr.getmaxyx() returns (height, width).
         # TODO 4: add colour: curses.start_color(), curses.use_default_colors(),
         #         curses.init_pair(1, curses.COLOR_CYAN, -1),
