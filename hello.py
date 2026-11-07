@@ -13,11 +13,20 @@ import curses
 def main(stdscr):
     curses.curs_set(0)                      # hide the blinking cursor
 
-    # TODO 2: make "hello, curses" bold (3rd argument: curses.A_BOLD).
-    stdscr.addstr(2, 4, "hello, curses", curses.A_BOLD)    # addstr(row, col, text): row first!
-    stdscr.addstr(4, 4, "press q to quit")
+
 
     while True:
+        # TODO 3: center the text. stdscr.getmaxyx() returns (height, width).
+        height, width = stdscr.getmaxyx()
+
+        xmiddle = width // 2
+        ymiddle = height // 2
+
+        # TODO 2: make "hello, curses" bold (3rd argument: curses.A_BOLD).
+        stdscr.addstr(ymiddle-2, xmiddle-6, "hello, curses", curses.A_BOLD)  # addstr(row, col, text): row first!
+        stdscr.addstr(ymiddle, xmiddle-7, "press q to quit")
+
+
         key = stdscr.getch()                # blocks until a key is pressed
         if key == ord("q"):
             break
@@ -26,12 +35,11 @@ def main(stdscr):
         #         Press arrows, Enter, Backspace, Esc. What are their codes?
         #         (hint: stdscr.keypad(True) makes arrows arrive as KEY_UP etc.
         #          instead of three raw bytes.)
-        stdscr.addstr(6, 4, "last key: {}".format(key))
+        stdscr.addstr(ymiddle+2, xmiddle-6, "last key: {}".format(key))
 
 
 
 
-        # TODO 3: center the text. stdscr.getmaxyx() returns (height, width).
         # TODO 4: add colour: curses.start_color(), curses.use_default_colors(),
         #         curses.init_pair(1, curses.COLOR_CYAN, -1),
         #         then attr = curses.color_pair(1).
