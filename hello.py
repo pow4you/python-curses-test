@@ -12,6 +12,7 @@ import curses
 
 def main(stdscr):
     stdscr.nodelay(True) # turned off blocking for keypress
+    stdscr.keypad(True) # allow for reading arrow keys correcly
 
     curses.curs_set(0)                      # hide the blinking cursor
 
@@ -45,8 +46,11 @@ def main(stdscr):
 
 
         # TODO 2: make "hello, curses" bold (3rd argument: curses.A_BOLD).
-        stdscr.addstr(ymiddle-2, xmiddle-6, "hello, curses", curses.A_BOLD | curses.color_pair(2))  # addstr(row, col, text): row first!
-        stdscr.addstr(ymiddle, xmiddle-7, "press q to quit")
+        hwtxt = "hello, curses"
+        stdscr.addstr(ymiddle-2, xmiddle-len(hwtxt) // 2, hwtxt, curses.A_BOLD | curses.color_pair(2))  # addstr(row, col, text): row first!
+
+        qutxt = "press q to quit"
+        stdscr.addstr(ymiddle, xmiddle-len(qutxt) // 2, qutxt)
 
 
 
@@ -54,7 +58,8 @@ def main(stdscr):
         #         Press arrows, Enter, Backspace, Esc. What are their codes?
         #         (hint: stdscr.keypad(True) makes arrows arrive as KEY_UP etc.
         #          instead of three raw bytes.)
-        stdscr.addstr(ymiddle + 2, xmiddle - 6, "last key: {}".format(key))
+        lktxt = "last key: {}".format(key)
+        stdscr.addstr(ymiddle + 2, xmiddle - len(lktxt) // 2, lktxt)
 
 
 
