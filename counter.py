@@ -12,131 +12,103 @@ import curses
 import time
 
 
-# TODO 5: separate state from drawing (the design of main.py)
-#
-#   Goal: tasks only CHANGE state, one Renderer class DRAWS it.
-#   After this, no task other than the renderer ever calls addstr/refresh.
-#
-#   Stage 1 - shared state.
-#     Put everything the screen shows into one object: a dict, or better a
-#     small @dataclass State with frames, total, paused, side_count.
-#     app() and side_step() now only write to it. Nothing draws yet.
-#     Checkpoint: print the state to a log file each second to see it change.
-#
-#   Stage 2 - the Renderer class.
-#     class Renderer:
-#         def __init__(self, stdscr, state): ...
-#         def put(self, y, x, text, attr=0):   # the clipped addstr helper:
-#             ...                              # skip if off-screen, trim text,
-#                                              # catch curses.error ONCE, here
-#         def draw(self): ...                  # erase(), put() each line from
-#                                              # state, refresh(). Nothing else.
-#     Checkpoint: replace every stdscr.addstr in your tasks with state writes,
-#     and call renderer.draw() from ONE place. Output looks identical.
-#
-#   Stage 3 - one render task.
-#     async def render_loop(renderer, running): draw, then await sleep(0.05).
-#     amain() gathers three things now: input/logic, side_step, render_loop.
-#     Question to answer: why can erase() safely live in draw() now, when it
-#     would have fought the side task before?
-#
-#   Stage 4 - input in its own place.
-#     Move getch()/key handling out of app() into on_key(key, state).
-#     It only changes state (pause, quit), same as the tasks do.
-#     Checkpoint: pausing still works, and `app` no longer touches stdscr.
-#
-#   Stage 5 - stretch.
-#     Add Renderer.panel(y, x, h, w, title) drawn with box characters,
-#     and put the counter in one panel and the side task in another.
-#     Then add a task that appends a line to a list in state every second,
-#     and show the last few lines in a "Log" panel.
-#
-#   Done when: you could add a third background task without touching
-#   Renderer's drawing code except to show the new field.
+class Screen:
+    def __init__(self, stdscr, running: asyncio.Event):
+        self._render_buffer = ["","","","","","","","",""]
+
+        self.stdscr = stdscr
+        self.paused = False
+
+        self.running = running
+
+    def toggle_pause(self):
+        self.paused = not self.paused
+
+
+    def save_to_buffer(self, line, indent, text):
+        self._render_buffer[line] = " "*indent + text
+
+
+    def _drawline(self, line, indent, text):
+        try:
+            self.stdscr.move(line, indent)
+            self.stdscr.clrtoeol()
+            self.stdscr.addstr(line, indent, text)
+        except curses.error:
+            pass
 
 
 
+    def _render(self):
+        for i, line in enumerate(self._render_buffer):
+            self._drawline(i, 0 , line)
 
-# TODO 4 (the big one): rewrite this as `async def main()` with
-#         `await asyncio.sleep(0.05)`, run a second task that prints
-#         something else on row 4, and watch both update. That is
-#         exactly how main.py lets the radiodish actor run alongside
-#         the UI.
-async def app(stdscr, running: asyncio.Event):
+    async def render_loop(self):
+        while self.running.is_set():
+            self._render()
 
-    pause_toggle = False
-    start_time = time.perf_counter()
+            self.stdscr.refresh()
+            await asyncio.sleep(0.05)
+
+    async def key_loop(self):
+        while self.running.is_set():
+            # 1. input: drain every key that's waiting (-1 means none left)
+            key = self.stdscr.getch()
+            if key == ord("q"):
+                self.running.clear()
+                break
+
+            if key == ord("p"):
+                self.toggle_pause()
+
+            await asyncio.sleep(0.1)
+
+#count frames
+async def frames(screen: Screen):
+
+    counter = 0
+    while screen.running.is_set():
+
+        if not screen.paused:
+            counter += 1
+
+        screen.save_to_buffer(2, 4, f"frames drawn: {counter}")
+
+        await asyncio.sleep(0.666)
+
+#timer
+async def timer(screen: Screen):
+
     elapsed = 0
-    total = 0
-    frames = 0
-    while running.is_set():
-        stdscr.erase()
+    last_frame = time.time()
+    while screen.running.is_set():
 
-        # 1. input: drain every key that's waiting (-1 means none left)
-        key = stdscr.getch()
-        if key == ord("q"):
-            running.clear()
-            break
-
-        # TODO 3: make "p" pause and resume the counter (state, not drawing!).
-        if key == ord("p"):
-            pause_toggle = not pause_toggle
-            if start_time != 0:
-                elapsed = time.perf_counter() - start_time
-                start_time = 0
-            else:
-                start_time = time.perf_counter()
-
+        new_frame = time.time()
         # 2. update state
-        if not pause_toggle:
-            total = elapsed
-            if start_time != 0:
-                total += time.perf_counter() - start_time
-            frames += 1
+        if not screen.paused:
+            delta = new_frame - last_frame
+            elapsed += delta
 
 
-        # 3. draw the whole screen from state
-        try:
-            stdscr.addstr(2, 4, f"frames drawn: {frames}")
-        except curses.error:
-            pass
+        screen.save_to_buffer(3, 4, f"seconds elapsed: {elapsed}")
 
-        # TODO 1: show seconds elapsed instead (use time.time() at the start),
-        #         so the number doesn't depend on how fast your loop runs.
-        try:
-            stdscr.addstr(3, 4, f"seconds elapsed: {total}")
-        except curses.error:
-            pass
+        last_frame = new_frame
 
-        stdscr.refresh()
-
-        await asyncio.sleep(0.05)                   # ~20 frames per second
-
-
-
-async def side_step(stdscr, running: asyncio.Event):
-    count = 0
-
-    while running.is_set():
-
-        try:
-            stdscr.addstr(4, 4, f"side task update: {count}")
-        except curses.error:
-            pass
-
-        stdscr.refresh()
-        count += 1
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0.333)                   # ~20 frames per second
 
 
 async def amain(stdscr):
     running = asyncio.Event()
     running.set()
 
+    screen = Screen(stdscr, running)
+
     # Both coroutines run concurrently as asyncio Tasks.
     await asyncio.gather(
-        app(stdscr, running),
-        side_step(stdscr, running),
+        timer(screen),
+        frames(screen),
+        screen.key_loop(),
+        screen.render_loop(),
     )
 
 
