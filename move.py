@@ -15,6 +15,8 @@ def main(stdscr):
     stdscr.keypad(True)                     # arrows arrive as curses.KEY_*
     stdscr.nodelay(True)
 
+    past = []
+    trail = 9
     x, y = 10, 5
     while True:
         key = stdscr.getch()
@@ -38,23 +40,32 @@ def main(stdscr):
         elif key in (curses.KEY_DOWN, ord("s"), ord("j")):
             y += 1
 
+
         x = max(minx, min(x, maxx-1))
         y = max(miny, min(y, maxy-1))
 
-
-
+        # TODO 4: leave a trail: keep a list of past positions and draw them
+        #         as "." before the "@". Cap its length so it fades.
+        pix = (x, y)
+        if pix not in past:
+            past.append(pix)
+        if len(past) > trail:
+            past.pop(0)
 
         stdscr.erase()
         try:
             stdscr.addstr(0, 0, f"x={x} y={y}   arrows move, q quits")
+
+            for pix in past:
+                stdscr.addstr(pix[1], pix[0], ".")
+
             stdscr.addstr(y, x, "@")
         except curses.error:
             pass
         stdscr.refresh()
         time.sleep(0.03)
 
-        # TODO 4: leave a trail: keep a list of past positions and draw them
-        #         as "." before the "@". Cap its length so it fades.
+
         # TODO 5: make the @ keep moving in its last direction on its own
         #         (a snake!). Direction becomes state; keys only change it.
 
