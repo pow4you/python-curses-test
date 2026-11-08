@@ -18,15 +18,31 @@ def main(stdscr):
     x, y = 10, 5
     while True:
         key = stdscr.getch()
-        if key == ord("q"):
-            break
-        elif key == curses.KEY_RIGHT:
-            x += 1
-        # TODO 1: handle KEY_LEFT, KEY_UP, KEY_DOWN the same way.
+
         # TODO 2: clamp so the @ can't leave the screen. Use getmaxyx()
         #         inside the loop, so it also works after you resize.
+        minx, miny = (0,1)
+        maxy, maxx = stdscr.getmaxyx()
+
+        # TODO 1: handle KEY_LEFT, KEY_UP, KEY_DOWN the same way.
         # TODO 3: add "wasd" and "hjkl" as alternatives without duplicating
         #         the movement code (hint: a dict from key to (dx, dy)).
+        if key == ord("q"):
+            break
+        elif key in (curses.KEY_RIGHT, ord("a"), ord("h")):
+            x += 1
+        elif key in (curses.KEY_LEFT, ord("d"), ord("l")):
+            x -= 1
+        elif key in (curses.KEY_UP, ord("w"), ord("j")):
+            y -= 1
+        elif key in (curses.KEY_DOWN, ord("s"), ord("j")):
+            y += 1
+
+        x = max(minx, min(x, maxx-1))
+        y = max(miny, min(y, maxy-1))
+
+
+
 
         stdscr.erase()
         stdscr.addstr(0, 0, f"x={x} y={y}   arrows move, q quits")
