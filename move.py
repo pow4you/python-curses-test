@@ -29,11 +29,11 @@ def main(stdscr):
         #         the movement code (hint: a dict from key to (dx, dy)).
         if key == ord("q"):
             break
-        elif key in (curses.KEY_RIGHT, ord("a"), ord("h")):
+        elif key in (curses.KEY_RIGHT, ord("d"), ord("l")):
             x += 1
-        elif key in (curses.KEY_LEFT, ord("d"), ord("l")):
+        elif key in (curses.KEY_LEFT, ord("a"), ord("h")):
             x -= 1
-        elif key in (curses.KEY_UP, ord("w"), ord("j")):
+        elif key in (curses.KEY_UP, ord("w"), ord("k")):
             y -= 1
         elif key in (curses.KEY_DOWN, ord("s"), ord("j")):
             y += 1
@@ -45,8 +45,11 @@ def main(stdscr):
 
 
         stdscr.erase()
-        stdscr.addstr(0, 0, f"x={x} y={y}   arrows move, q quits")
-        stdscr.addstr(y, x, "@")             # crashes at the edge: TODO 2 fixes it
+        try:
+            stdscr.addstr(0, 0, f"x={x} y={y}   arrows move, q quits")
+            stdscr.addstr(y, x, "@")
+        except curses.error:
+            pass
         stdscr.refresh()
         time.sleep(0.03)
 
