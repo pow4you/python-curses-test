@@ -18,13 +18,16 @@ def main(stdscr):
     past = []
     trail = 9
     x, y = 10, 5
+    hx, hy = 0,1
     while True:
         key = stdscr.getch()
 
         # TODO 2: clamp so the @ can't leave the screen. Use getmaxyx()
         #         inside the loop, so it also works after you resize.
-        minx, miny = (0,1)
+        minx, miny = 0,1
         maxy, maxx = stdscr.getmaxyx()
+        dx, dy = 0,0
+        tx, ty = x, y
 
         # TODO 1: handle KEY_LEFT, KEY_UP, KEY_DOWN the same way.
         # TODO 3: add "wasd" and "hjkl" as alternatives without duplicating
@@ -32,36 +35,45 @@ def main(stdscr):
         if key == ord("q"):
             break
         elif key in (curses.KEY_RIGHT, ord("d"), ord("l")):
-            x += 1
+            dx += 1
+            hx, hy = 1, 0
         elif key in (curses.KEY_LEFT, ord("a"), ord("h")):
-            x -= 1
+            dx -= 1
+            hx, hy = -1, 0
         elif key in (curses.KEY_UP, ord("w"), ord("k")):
-            y -= 1
+            dy -= 1
+            hx, hy = 0, -1
         elif key in (curses.KEY_DOWN, ord("s"), ord("j")):
-            y += 1
+            dy += 1
+            hx, hy = 0, 1
 
-
-        x = max(minx, min(x, maxx-1))
-        y = max(miny, min(y, maxy-1))
+        if dx != 0:
+            tx = max(minx, min(x+dx, maxx-1))
+        if dy != 0:
+            ty = max(miny, min(y+dy, maxy-1))
 
         # TODO 4: leave a trail: keep a list of past positions and draw them
         #         as "." before the "@". Cap its length so it fades.
-        pix = (x, y)
-        if pix not in past:
-            past.append(pix)
-        if len(past) > trail:
-            past.pop(0)
+        if dx != 0 or dy != 0:
+            pos = (tx, ty)
+            if pos not in past:
+                past.append(pos)
+            if len(past) > trail:
+                past.pop(0)
 
         stdscr.erase()
         try:
-            stdscr.addstr(0, 0, f"x={x} y={y}   arrows move, q quits")
+            stdscr.addstr(0, 0, f"x={tx} y={ty}   arrows move, q quits")
 
-            for pix in past:
-                stdscr.addstr(pix[1], pix[0], ".")
+            for pos in past:
+                stdscr.addstr(pos[1], pos[0], ".")
 
             stdscr.addstr(y, x, "@")
         except curses.error:
             pass
+
+        x, y = tx, ty
+
         stdscr.refresh()
         time.sleep(0.03)
 
